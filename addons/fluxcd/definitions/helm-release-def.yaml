@@ -40,10 +40,13 @@ spec:
         			_sourceCommonArgs
         		}
         	}
-        	if parameter.repoType == "helm" {
+        	if parameter.repoType == "helm" || parameter.repoType == "oci" {
         		kind: "HelmRepository"
         		spec: {
         			url: parameter.url
+                    if parameter.repoType == "oci" {
+                       type: "oci"
+                    }
         			_secret
         			_sourceCommonArgs
         		}
@@ -67,7 +70,7 @@ spec:
         					if parameter.repoType == "git" {
         						kind: "GitRepository"
         					}
-        					if parameter.repoType == "helm" {
+        					if parameter.repoType == "helm" || parameter.repoType == "oci" {
         						kind: "HelmRepository"
         					}
         					if parameter.repoType == "oss" {
@@ -76,6 +79,9 @@ spec:
         					name:      context.name
         				}
         				interval: parameter.interval
+                        if parameter["valuesFiles"] != _|_ {
+                            valuesFiles: parameter["valuesFiles"]
+                        }
         			}
         		}
         		if parameter.targetNamespace != _|_ {
@@ -108,7 +114,7 @@ spec:
         }
 
         parameter: {
-        	repoType: *"helm" | "git" | "oss"
+        	repoType: *"helm" | "git" | "oss" | "oci"
         	// +usage=The interval at which to check for repository/bucket and release updates, default to 5m
         	pullInterval: *"5m" | string
           // +usage=The  Interval at which to reconcile the Helm release, default to 30s
@@ -134,6 +140,8 @@ spec:
         		// +usage=The bucket region, optional
         		region?: string
         	}
+            // +usage=Alternative list of values files to use as the chart values (values.yaml is not included by default), expected to be a relative path in the SourceRef.Values files are merged in the order of this list with the last file overriding the first.
+            valuesFiles?: [...string]
 
         	// +usage=1.The relative path to helm chart for git/oss source. 2. chart name for helm resource 3. relative path for chart package(e.g. ./charts/podinfo-1.2.3.tgz)
         	chart: string
